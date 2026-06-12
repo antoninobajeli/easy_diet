@@ -1,0 +1,72 @@
+{
+  "colazione": {
+    "bevanda_o_latticino": [
+      "latte parzialmente scremato 200 g",
+      "yogurt magro bianco 200 g",
+      "yogurt alla frutta 150 g"
+    ],
+    "carboidrati": [
+      "3 fette biscottate integrali",
+      "cereali integrali non zuccherati 20 g",
+      "pane di grano duro o integrale 30 g"
+    ]
+  },
+  "spuntino_ore_11": {
+    "opzioni": [
+      "frutta fresca: anguria 200 g",
+      "frutta fresca: arance, albicocche, melone, fragole, nespole, noci pesche, pesche, pompelmo 150 g",
+      "frutta fresca: mele, pere, ananas, kiwi, prugne 100 g",
+      "frutta fresca: banane, fichi, fichi d’india, loti, mandarini, mandaranci, uva 80 g",
+      "yogurt magro bianco (1 vasetto)",
+      "crackers integrali o Pavesini (1 pacchetto)",
+      "3 fette biscottate integrali",
+      "frutta secca 15 g"
+    ]
+  },
+  "pranzo": {
+    "primo_piatto": [
+      "pasta, riso o altri cereali (preferibilmente integrali) 50 g",
+      "legumi secchi 50 g",
+      "legumi freschi o patate 150 g",
+      "pasta 30 g + legumi (secchi 20 g, freschi 100 g)",
+      "pane di grano duro o integrale 60 g"
+    ],
+    "secondo_piatto": [
+      "carne magra 150 g (pollo, tacchino, coniglio, cavallo, vitello)",
+      "pesce azzurro 180 g"
+    ],
+    "contorno": [
+      "verdura cruda o cotta a volontà"
+    ],
+    "olio_evo": [
+      "3 cucchiaini da caffè"
+    ]
+  },
+  "spuntino_ore_17": {
+    "opzioni": [
+      "come lo spuntino delle ore 11"
+    ]
+  },
+  "cena": {
+    "primo_piatto": [
+      "pane di grano duro o integrale 60 g",
+      "pasta, riso o altri cereali (preferibilmente integrali) 50 g",
+      "legumi secchi 50 g",
+      "legumi freschi o patate 200 g"
+    ],
+    "secondo_piatto": [
+      "carne magra 150 g (pollo, tacchino, coniglio, cavallo, vitello)",
+      "pesce azzurro 180 g",
+      "salumi magri 60 g",
+      "formaggio fresco (mozzarella, stracchino, scamorza) 60 g",
+      "formaggio fresco magro (ricotta) 80 g",
+      "1 uovo intero"
+    ],
+    "contorno": [
+      "verdura cruda o cotta a volontà"
+    ],
+    "olio_evo": [
+      "2 cucchiaini da caffè"
+    ]
+  }
+}
