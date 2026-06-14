@@ -56,6 +56,15 @@ class _MealScreenState extends State<MealScreen> {
     });
   }
 
+  void _selectDailyMeal(String mealKey, String? mealValue) {
+    if (_service == null) return;
+    setState(() {
+      _currentMeal = mealKey;
+      _currentItem = mealValue;
+      _currentImage = _service!.getRandomImageForMeal(mealKey);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,15 +179,15 @@ class _MealScreenState extends State<MealScreen> {
                         ),
                         const SizedBox(height: 12),
                         if (_dailyMenu != null) ...[
-                          _buildMiniCard('Colazione', _dailyMenu!['colazione'], _service!.getRandomImageForMeal('colazione')),
+                          _buildMiniCard('Colazione', 'colazione', _dailyMenu!['colazione'], _service!.getRandomImageForMeal('colazione')),
                           const SizedBox(height: 8),
-                          _buildMiniCard('Spuntino 11', _dailyMenu!['spuntino_ore_11'], _service!.getRandomImageForMeal('spuntino_ore_11')),
+                          _buildMiniCard('Spuntino 11', 'spuntino_ore_11', _dailyMenu!['spuntino_ore_11'], _service!.getRandomImageForMeal('spuntino_ore_11')),
                           const SizedBox(height: 8),
-                          _buildMiniCard('Pranzo', _dailyMenu!['pranzo'], _service!.getRandomImageForMeal('pranzo')),
+                          _buildMiniCard('Pranzo', 'pranzo', _dailyMenu!['pranzo'], _service!.getRandomImageForMeal('pranzo')),
                           const SizedBox(height: 8),
-                          _buildMiniCard('Spuntino 17', _dailyMenu!['spuntino_ore_17'], _service!.getRandomImageForMeal('spuntino_ore_17')),
+                          _buildMiniCard('Spuntino 17', 'spuntino_ore_17', _dailyMenu!['spuntino_ore_17'], _service!.getRandomImageForMeal('spuntino_ore_17')),
                           const SizedBox(height: 8),
-                          _buildMiniCard('Cena', _dailyMenu!['cena'], _service!.getRandomImageForMeal('cena')),
+                          _buildMiniCard('Cena', 'cena', _dailyMenu!['cena'], _service!.getRandomImageForMeal('cena')),
                         ]
                       ],
                     ),
@@ -189,32 +198,43 @@ class _MealScreenState extends State<MealScreen> {
     );
   }
 
-  Widget _buildMiniCard(String title, String? subtitle, String imageUrl) {
+  Widget _buildMiniCard(String title, String mealKey, String? subtitle, String imageUrl) {
+    final isSelected = mealKey == _currentMeal;
     return Card(
       clipBehavior: Clip.hardEdge,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 96,
-            height: 72,
-            child: imageUrl.isNotEmpty
-                ? Image.network(imageUrl, fit: BoxFit.cover)
-                : Container(color: Colors.grey[300]),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(subtitle ?? '-', maxLines: 2, overflow: TextOverflow.ellipsis),
-              ],
+      color: isSelected ? Colors.blue.shade50 : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? Colors.blueAccent : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _selectDailyMeal(mealKey, subtitle),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 96,
+              height: 72,
+              child: imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                  : Container(color: Colors.grey[300]),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text(subtitle ?? '-', maxLines: 2, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ),
       ),
     );
   }
