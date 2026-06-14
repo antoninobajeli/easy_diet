@@ -63,32 +63,14 @@ class DietService {
 
   // Simple royalty-free image suggestions (Unsplash). These are remote URLs
   // and used for a more attractive UI. You may replace them as desired.
+  // Use local asset images placed in `assets/imgs/`. Filenames should be
+  // meaningful (e.g. colazione.png, pranzo.png, spuntino11.png, spuntino17.png).
   static const Map<String, List<String>> _images = {
-    'colazione': [
-      'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1505575967450-4b9f0b6d9d2b?auto=format&fit=crop&w=800&q=80'
-    ],
-    'spuntino_ore_11': [
-      'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1505575967450-4b9f0b6d9d2b?auto=format&fit=crop&w=800&q=80'
-    ],
-    'pranzo': [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'
-    ],
-    'spuntino_ore_17': [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'
-    ],
-    'cena': [
-      'https://images.unsplash.com/photo-1543352634-1b5c4d56c3b8?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'
-    ],
+    'colazione': ['assets/imgs/colazione.png'],
+    'spuntino_ore_11': ['assets/imgs/spuntino11.png'],
+    'pranzo': ['assets/imgs/pranzo.png'],
+    'spuntino_ore_17': ['assets/imgs/spuntino17.png'],
+    'cena': ['assets/imgs/cena.png'],
   };
 
   String getRandomImageForMeal(String meal) {

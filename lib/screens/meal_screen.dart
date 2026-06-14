@@ -9,13 +9,17 @@ class MealScreen extends StatefulWidget {
   State<MealScreen> createState() => _MealScreenState();
 }
 
-class _MealScreenState extends State<MealScreen> {
+class _MealScreenState extends State<MealScreen>
+    with AutomaticKeepAliveClientMixin {
   DietService? _service;
   String? _currentMeal;
   String? _currentItem;
   String? _currentImage;
   Map<String, String>? _dailyMenu;
   bool _loading = true;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -67,6 +71,7 @@ class _MealScreenState extends State<MealScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Easy Diet')),
       body: _loading
@@ -81,10 +86,15 @@ class _MealScreenState extends State<MealScreen> {
                         height: 260,
                         width: double.infinity,
                         child: _currentImage != null && _currentImage!.isNotEmpty
-                            ? Image.network(
-                                _currentImage!,
-                                fit: BoxFit.cover,
-                              )
+                            ? (_currentImage!.startsWith('http')
+                                ? Image.network(
+                                    _currentImage!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    _currentImage!,
+                                    fit: BoxFit.cover,
+                                  ))
                             : Container(color: Colors.grey[300]),
                       ),
                       Container(
@@ -217,8 +227,10 @@ class _MealScreenState extends State<MealScreen> {
             SizedBox(
               width: 96,
               height: 72,
-              child: imageUrl.isNotEmpty
-                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                child: imageUrl.isNotEmpty
+                  ? (imageUrl.startsWith('http')
+                    ? Image.network(imageUrl, fit: BoxFit.cover)
+                    : Image.asset(imageUrl, fit: BoxFit.cover))
                   : Container(color: Colors.grey[300]),
             ),
             const SizedBox(width: 12),
