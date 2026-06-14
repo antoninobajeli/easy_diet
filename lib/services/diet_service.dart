@@ -14,20 +14,31 @@ class DietService {
     return DietService._(data);
   }
 
-  List<String> _flattenMeal(String meal) {
-    final mealMap = _data[meal] as Map<String, dynamic>?;
-    if (mealMap == null) return [];
-    final List<String> items = [];
-    mealMap.forEach((_, value) {
-      if (value is List) items.addAll(value.map((e) => e.toString()));
-    });
-    return items;
+  final Random _random = Random();
+
+  Map<String, dynamic> _mealMap(String meal) {
+    return _data[meal] as Map<String, dynamic>? ?? {};
   }
 
   String getRandomForMeal(String meal) {
-    final items = _flattenMeal(meal);
-    if (items.isEmpty) return 'Nessun elemento disponibile';
-    return items[Random().nextInt(items.length)];
+    final mealMap = _mealMap(meal);
+    if (mealMap.isEmpty) return 'Nessun elemento disponibile';
+
+    final parts = <String>[];
+    mealMap.forEach((category, value) {
+      if (value is List && value.isNotEmpty) {
+        final item = value[_random.nextInt(value.length)].toString();
+        if (mealMap.length == 1) {
+          parts.add(item);
+        } else {
+          final label = category.replaceAll('_', ' ');
+          parts.add('$label: $item');
+        }
+      }
+    });
+
+    if (parts.isEmpty) return 'Nessun elemento disponibile';
+    return parts.join('\n');
   }
 
   Map<String, String> getRandomDailyMenu() {
