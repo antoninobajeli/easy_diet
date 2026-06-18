@@ -32,7 +32,8 @@ class DietService {
           parts.add(item);
         } else {
           final label = category.replaceAll('_', ' ');
-          parts.add('$label: $item');
+          //parts.add('$label: $item');
+          parts.add('-$item');
         }
       }
     });

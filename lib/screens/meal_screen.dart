@@ -138,17 +138,17 @@ class _MealScreenState extends State<MealScreen>
                                       _currentMeal?.toUpperCase() ?? '-',
                                       style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 26,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.bold),
-                                    ),
+                                    ), 
                                     const SizedBox(height: 6),
                                     Text(
                                       _currentItem ?? '-',
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 22,
+                                        fontSize: 18,
                                       ),
-                                      maxLines: 3,
+                                      maxLines: 6,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -162,7 +162,7 @@ class _MealScreenState extends State<MealScreen>
                                 backgroundColor: Colors.white70,
                                 foregroundColor: Colors.black,
                               ),
-                              child: const Text('Altro'),
+                              child: const Icon(Icons.refresh)
                             ),
                           ],
                         ),
