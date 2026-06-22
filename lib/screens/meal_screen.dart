@@ -17,6 +17,8 @@ class _MealScreenState extends State<MealScreen>
   String? _currentImage;
   Map<String, String>? _dailyMenu;
   bool _loading = true;
+  DateTime _startDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
 
   @override
   bool get wantKeepAlive => true;
@@ -29,9 +31,17 @@ class _MealScreenState extends State<MealScreen>
 
   Future<void> _init() async {
     final svc = await DietService.loadFromAsset('assets/diet.json');
-    final daily = svc.getRandomDailyMenu();
-    final meal = svc.mealForTime(DateTime.now());
-    final item = svc.getRandomForMeal(meal);
+    final today = DateTime.now();
+    final loaded = await svc.loadDailyMenuForDate(today);
+    Map<String, String> daily;
+    if (loaded != null) {
+      daily = loaded;
+    } else {
+      daily = svc.getRandomDailyMenu();
+      await svc.saveDailyMenuForDate(today, daily);
+    }
+    final meal = svc.mealForTime(today);
+    final item = daily[meal] ?? svc.getRandomForMeal(meal);
     final img = svc.getRandomImageForMeal(meal);
     setState(() {
       _service = svc;
@@ -43,6 +53,41 @@ class _MealScreenState extends State<MealScreen>
     });
   }
 
+  List<DateTime> _sevenDays() {
+    return List.generate(7, (i) => DateTime(_startDate.year, _startDate.month, _startDate.day).add(Duration(days: i)));
+  }
+
+  String _weekdayLabel(DateTime d) {
+    const labels = ['','Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    return labels[d.weekday];
+  }
+
+  void _shiftStartDate(int days) {
+    setState(() {
+      _startDate = _startDate.add(Duration(days: days));
+    });
+  }
+
+  Future<void> _loadMenuForDate(DateTime date) async {
+    if (_service == null) return;
+    final menu = await _service!.loadDailyMenuForDate(date);
+    Map<String, String> usedMenu;
+    if (menu != null) {
+      usedMenu = menu;
+    } else {
+      usedMenu = _service!.getRandomDailyMenu();
+      await _service!.saveDailyMenuForDate(date, usedMenu);
+    }
+    final meal = _service!.mealForTime(date);
+    setState(() {
+      _selectedDate = date;
+      _dailyMenu = usedMenu;
+      _currentMeal = meal;
+      _currentItem = usedMenu[meal];
+      _currentImage = _service!.getRandomImageForMeal(meal);
+    });
+  }
+
   void _refreshItem() {
     if (_service == null || _currentMeal == null) return;
     setState(() {
@@ -51,13 +96,14 @@ class _MealScreenState extends State<MealScreen>
     });
   }
 
-  void _refreshDaily() {
+  Future<void> _refreshDaily() async {
     if (_service == null) return;
     setState(() {
       _dailyMenu = _service!.getRandomDailyMenu();
       _currentItem = _dailyMenu![_currentMeal!];
       _currentImage = _service!.getRandomImageForMeal(_currentMeal!);
     });
+    await _service!.saveDailyMenuForDate(DateTime.now(), _dailyMenu!);
   }
 
   void _selectDailyMeal(String mealKey, String? mealValue) {
@@ -185,6 +231,53 @@ class _MealScreenState extends State<MealScreen>
                               onPressed: _refreshDaily,
                               child: const Text('Rigenera menu'),
                             )
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Horizontal 7-day selector
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.chevron_left),
+                              onPressed: () => _shiftStartDate(-1),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: _sevenDays().map((d) {
+                                    final isSelected = DateTime(d.year, d.month, d.day) ==
+                                        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                                      child: GestureDetector(
+                                        onTap: () => _loadMenuForDate(d),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? Colors.blue.shade50 : null,
+                                            border: Border.all(color: isSelected ? Colors.blueAccent : Colors.transparent, width: 2),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(_weekdayLabel(d), style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.blueAccent : null)),
+                                              const SizedBox(height: 4),
+                                              Text('${d.day}', style: TextStyle(color: isSelected ? Colors.blueAccent : null)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.chevron_right),
+                              onPressed: () => _shiftStartDate(1),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
