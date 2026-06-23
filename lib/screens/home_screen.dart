@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'meal_screen.dart';
+import 'diet_list_screen.dart';
+import 'saved_plans_screen.dart';
 import '../constants/app_constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,9 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
         children: const [
           _HomePage(),
           MealScreen(),
+          DietListScreen(),
+          SavedPlansScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -37,6 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.lunch_dining),
             label: 'Menu del giorno',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Tutte le opzioni',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Archivio',
           ),
         ],
         currentIndex: _selectedIndex,

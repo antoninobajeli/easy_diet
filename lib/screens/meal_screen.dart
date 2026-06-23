@@ -19,6 +19,7 @@ class _MealScreenState extends State<MealScreen>
   bool _loading = true;
   DateTime _startDate = DateTime.now();
   DateTime _selectedDate = DateTime.now();
+  Set<String> _savedDates = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -40,6 +41,7 @@ class _MealScreenState extends State<MealScreen>
       daily = svc.getRandomDailyMenu();
       await svc.saveDailyMenuForDate(today, daily);
     }
+    final savedDates = await svc.getSavedDates();
     final meal = svc.mealForTime(today);
     final item = daily[meal] ?? svc.getRandomForMeal(meal);
     final img = svc.getRandomImageForMeal(meal);
@@ -49,6 +51,7 @@ class _MealScreenState extends State<MealScreen>
       _currentMeal = meal;
       _currentItem = item;
       _currentImage = img;
+      _savedDates = savedDates;
       _loading = false;
     });
   }
@@ -79,6 +82,15 @@ class _MealScreenState extends State<MealScreen>
       await _service!.saveDailyMenuForDate(date, usedMenu);
     }
     final meal = _service!.mealForTime(date);
+    if (menu == null) {
+      await _saveAndVerify(date, usedMenu);
+    } else {
+      final savedDates = await _service!.getSavedDates();
+      setState(() {
+        _savedDates = savedDates;
+      });
+    }
+    
     setState(() {
       _selectedDate = date;
       _dailyMenu = usedMenu;
@@ -88,22 +100,30 @@ class _MealScreenState extends State<MealScreen>
     });
   }
 
-  void _refreshItem() {
-    if (_service == null || _currentMeal == null) return;
+  Future<void> _refreshItem() async {
+    if (_service == null || _currentMeal == null || _dailyMenu == null) return;
+    final newItem = _service!.getRandomForMeal(_currentMeal!);
+    final newImg = _service!.getRandomImageForMeal(_currentMeal!);
     setState(() {
-      _currentItem = _service!.getRandomForMeal(_currentMeal!);
-      _currentImage = _service!.getRandomImageForMeal(_currentMeal!);
+      _currentItem = newItem;
+      _currentImage = newImg;
+      _dailyMenu![_currentMeal!] = newItem;
     });
+    await _saveAndVerify(_selectedDate, _dailyMenu!);
   }
 
   Future<void> _refreshDaily() async {
     if (_service == null) return;
+    final newMenu = _service!.getRandomDailyMenu();
     setState(() {
-      _dailyMenu = _service!.getRandomDailyMenu();
-      _currentItem = _dailyMenu![_currentMeal!];
-      _currentImage = _service!.getRandomImageForMeal(_currentMeal!);
+      _dailyMenu = newMenu;
+      if (_currentMeal != null) {
+        _currentItem = _dailyMenu![_currentMeal!];
+        _currentImage = _service!.getRandomImageForMeal(_currentMeal!);
+      }
     });
-    await _service!.saveDailyMenuForDate(DateTime.now(), _dailyMenu!);
+    // Salva esplicitamente il nuovo menu generato per la data selezionata
+    await _saveAndVerify(_selectedDate, newMenu);
   }
 
   void _selectDailyMeal(String mealKey, String? mealValue) {
@@ -113,6 +133,65 @@ class _MealScreenState extends State<MealScreen>
       _currentItem = mealValue;
       _currentImage = _service!.getRandomImageForMeal(mealKey);
     });
+  }
+
+  void _showSaveFeedback(DateTime date, bool verified) {
+    if (!mounted) return;
+    final dateStr = "${date.day}/${date.month}/${date.year}";
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(verified ? Icons.verified_user : Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(verified 
+                  ? 'FILE SCRITTO: Piano verificato per il $dateStr' 
+                  : 'ERRORE: Impossibile verificare la scrittura su file'),
+            ),
+          ],
+        ),
+        backgroundColor: verified ? Colors.blueAccent : Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveAndVerify(DateTime date, Map<String, String> menu) async {
+    if (_service == null) return;
+    
+    // 1. Salvataggio con flush
+    final success = await _service!.saveDailyMenuForDate(date, menu);
+    
+    if (!success) {
+      _showSaveFeedback(date, false);
+      return;
+    }
+
+    // Piccola attesa per il filesystem
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    // 2. Verifica (rilettura REALE dal disco)
+    final verifiedMenu = await _service!.loadDailyMenuForDate(date);
+    final savedDates = await _service!.getSavedDates();
+    
+    // Confronto dei contenuti per la massima certezza
+    bool isVerified = verifiedMenu != null && 
+                     verifiedMenu.length == menu.length &&
+                     verifiedMenu.keys.every((k) => menu.containsKey(k));
+    
+    setState(() {
+      _savedDates = savedDates;
+    });
+    
+    _showSaveFeedback(date, isVerified);
   }
 
   @override
@@ -246,6 +325,8 @@ class _MealScreenState extends State<MealScreen>
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
                                   children: _sevenDays().map((d) {
+                                    final dateKey = d.toIso8601String().split('T').first;
+                                    final hasSaved = _savedDates.contains(dateKey);
                                     final isSelected = DateTime(d.year, d.month, d.day) ==
                                         DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
                                     return Padding(
@@ -255,16 +336,31 @@ class _MealScreenState extends State<MealScreen>
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? Colors.blue.shade50 : null,
-                                            border: Border.all(color: isSelected ? Colors.blueAccent : Colors.transparent, width: 2),
+                                            color: isSelected 
+                                                ? Colors.blue.shade50 
+                                                : (hasSaved ? Colors.green.shade100 : null),
+                                            border: Border.all(
+                                                color: isSelected 
+                                                    ? Colors.blueAccent 
+                                                    : (hasSaved ? Colors.green : Colors.transparent), 
+                                                width: 2),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(_weekdayLabel(d), style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.blueAccent : null)),
+                                              Text(_weekdayLabel(d), 
+                                                  style: TextStyle(
+                                                      fontWeight: FontWeight.bold, 
+                                                      color: isSelected 
+                                                          ? Colors.blueAccent 
+                                                          : (hasSaved ? Colors.green.shade700 : null))),
                                               const SizedBox(height: 4),
-                                              Text('${d.day}', style: TextStyle(color: isSelected ? Colors.blueAccent : null)),
+                                              Text('${d.day}', 
+                                                  style: TextStyle(
+                                                      color: isSelected 
+                                                          ? Colors.blueAccent 
+                                                          : (hasSaved ? Colors.green.shade700 : null))),
                                             ],
                                           ),
                                         ),

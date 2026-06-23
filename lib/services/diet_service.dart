@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DietService {
   final Map<String, dynamic> _data;
+  static const String _storageKey = 'diet_plans_storage';
 
   DietService._(this._data);
 
@@ -33,8 +34,6 @@ class DietService {
         if (mealMap.length == 1) {
           parts.add(item);
         } else {
-          final label = category.replaceAll('_', ' ');
-          //parts.add('$label: $item');
           parts.add('-$item');
         }
       }
@@ -54,43 +53,56 @@ class DietService {
     };
   }
 
-  Future<void> saveDailyMenuForDate(DateTime date, Map<String, String> menu) async {
+  Future<bool> saveDailyMenuForDate(DateTime date, Map<String, String> menu) async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/diet_plan.json');
-      Map<String, dynamic> data = {};
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        if (content.trim().isNotEmpty) {
-          data = json.decode(content) as Map<String, dynamic>;
-        }
-      }
-      final key = date.toIso8601String().split('T').first;
+      final prefs = await SharedPreferences.getInstance();
+      final content = prefs.getString(_storageKey) ?? '{}';
+      final Map<String, dynamic> data = json.decode(content);
+      
+      final key = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       data[key] = menu;
-      await file.writeAsString(json.encode(data));
+      
+      return await prefs.setString(_storageKey, json.encode(data));
     } catch (e) {
-      // ignore errors silently for now
+      debugPrint('Error saving diet plan: $e');
+      return false;
     }
   }
 
   Future<Map<String, String>?> loadDailyMenuForDate(DateTime date) async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/diet_plan.json');
-      if (!await file.exists()) return null;
-      final content = await file.readAsString();
-      if (content.trim().isEmpty) return null;
-      final data = json.decode(content) as Map<String, dynamic>;
-      final key = date.toIso8601String().split('T').first;
+      final prefs = await SharedPreferences.getInstance();
+      final content = prefs.getString(_storageKey);
+      if (content == null || content.isEmpty) return null;
+      
+      final Map<String, dynamic> data = json.decode(content);
+      final key = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       final menu = data[key];
+      
       if (menu == null) return null;
+      
       final Map<String, String> result = {};
       (menu as Map<String, dynamic>).forEach((k, v) {
         result[k] = v.toString();
       });
       return result;
     } catch (e) {
+      debugPrint('Error loading diet plan: $e');
       return null;
+    }
+  }
+
+  Future<Set<String>> getSavedDates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final content = prefs.getString(_storageKey);
+      if (content == null || content.isEmpty) return {};
+      
+      final Map<String, dynamic> data = json.decode(content);
+      return data.keys.toSet();
+    } catch (e) {
+      debugPrint('Error getting saved dates: $e');
+      return {};
     }
   }
 
@@ -104,10 +116,6 @@ class DietService {
     return 'colazione';
   }
 
-  // Simple royalty-free image suggestions (Unsplash). These are remote URLs
-  // and used for a more attractive UI. You may replace them as desired.
-  // Use local asset images placed in `assets/imgs/`. Filenames should be
-  // meaningful (e.g. colazione.png, pranzo.png, spuntino11.png, spuntino17.png).
   static const Map<String, List<String>> _images = {
     'colazione': ['assets/imgs/colazione.png'],
     'spuntino_ore_11': ['assets/imgs/spuntino11.png'],
